@@ -1,0 +1,162 @@
+import { useState, useEffect, useRef, useCallback } from "react";
+
+// ============================================================
+// DESIGN TOKENS
+// ============================================================
+const tokens = {
+  purple: "#7C3AED",
+  purpleLight: "#8B5CF6",
+  purpleDark: "#6D28D9",
+  purpleGlow: "rgba(124,58,237,0.18)",
+  purpleBg: "rgba(124,58,237,0.08)",
+  green: "#22C55E",
+  red: "#EF4444",
+  amber: "#F59E0B",
+  blue: "#3B82F6",
+};
+
+// ============================================================
+// INITIAL DATA
+// ============================================================
+const DEMO_USERS = [
+  { id: "u1", username: "arjun.verma", displayName: "Arjun Verma", bio: "Dreamer | Writer | Believer. Turning thoughts into words.", avatar: "AV", avatarColor: "#7C3AED", location: "Delhi, India", website: "textone.app/arjun", joinedDate: "May 2023", followers: 12600, following: 230, isVerified: true, isPremium: true, isAdmin: false, isSuspended: false, posts: 340 },
+  { id: "u2", username: "maya.kapoor", displayName: "Maya Kapoor", bio: "Chasing dreams and good coffees ☕", avatar: "MK", avatarColor: "#EC4899", location: "Mumbai, India", website: "", joinedDate: "Jun 2023", followers: 8300, following: 145, isVerified: false, isPremium: false, isAdmin: false, isSuspended: false, posts: 210 },
+  { id: "u3", username: "jessica.lee", displayName: "Jessica Lee", bio: "Design is not just what it looks like. Design is how it works.", avatar: "JL", avatarColor: "#10B981", location: "San Francisco, CA", website: "", joinedDate: "Mar 2023", followers: 5200, following: 320, isVerified: true, isPremium: true, isAdmin: false, isSuspended: false, posts: 180 },
+  { id: "u4", username: "rohan.sharma", displayName: "Rohan Sharma", bio: "Music | Code | Coffee. Building the future one line at a time.", avatar: "RS", avatarColor: "#F59E0B", location: "Bangalore, India", website: "", joinedDate: "Apr 2023", followers: 3100, following: 89, isVerified: false, isPremium: false, isAdmin: false, isSuspended: false, posts: 95 },
+  { id: "u5", username: "ananya.sharma", displayName: "Ananya Sharma", bio: "Photographer & visual storyteller 📸", avatar: "AS", avatarColor: "#6366F1", location: "Pune, India", website: "", joinedDate: "Jul 2023", followers: 1800, following: 67, isVerified: false, isPremium: false, isAdmin: false, isSuspended: false, posts: 56 },
+  { id: "u6", username: "karan.malhotra", displayName: "Karan Malhotra", bio: "Fitness | Nutrition | Mindset 💪", avatar: "KM", avatarColor: "#EF4444", location: "Chennai, India", website: "", joinedDate: "Aug 2023", followers: 920, following: 44, isVerified: false, isPremium: false, isAdmin: false, isSuspended: false, posts: 34 },
+  { id: "admin1", username: "superadmin", displayName: "Super Admin", bio: "Platform Administrator", avatar: "SA", avatarColor: "#DC2626", location: "", website: "", joinedDate: "Jan 2023", followers: 0, following: 0, isVerified: true, isPremium: true, isAdmin: true, isSuspended: false, posts: 0, role: "superadmin" },
+];
+
+const DEMO_POSTS = [
+  { id: "p1", authorId: "u1", content: "Sometimes the right words at the right time can change everything. ✨\nWhat's on your mind today?", image: null, timestamp: "2h", likes: 132, comments: 24, reposts: 12, bookmarks: 8, isLiked: false, isBookmarked: false, isPinned: true },
+  { id: "p2", authorId: "u2", content: "Chasing dreams and good coffees ☕\nSunday kind of vibe.", image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80", timestamp: "4h", likes: 89, comments: 15, reposts: 7, bookmarks: 12, isLiked: true, isBookmarked: false, isPinned: false },
+  { id: "p3", authorId: "u3", content: "Design is not just what it looks like — it's how it works. Every pixel is a decision. Make them count. 🎨", image: null, timestamp: "6h", likes: 245, comments: 38, reposts: 31, bookmarks: 55, isLiked: false, isBookmarked: true, isPinned: false },
+  { id: "p4", authorId: "u4", content: "Sunsets, silence and a little bit of music = perfect evening 🎧🎵", image: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=600&q=80", timestamp: "3h", likes: 312, comments: 32, reposts: 68, bookmarks: 41, isLiked: false, isBookmarked: false, isPinned: false },
+  { id: "p5", authorId: "u1", content: "It's okay to start over. This time, you're not starting from scratch, you're starting from experience. 💫", image: null, timestamp: "1d", likes: 567, comments: 89, reposts: 124, bookmarks: 98, isLiked: false, isBookmarked: false, isPinned: false },
+  { id: "p6", authorId: "u5", content: "Golden hour photography hits different every single time 🌅📸 The colors, the shadows, everything just aligns perfectly.", image: "https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?w=600&q=80", timestamp: "8h", likes: 198, comments: 27, reposts: 19, bookmarks: 33, isLiked: false, isBookmarked: false, isPinned: false },
+];
+
+const DEMO_MESSAGES = {
+  "u1-u2": [
+    { id: "m1", senderId: "u1", content: "Hey Maya! Loved your latest post 🔥", timestamp: "10:30 AM", isRead: true },
+    { id: "m2", senderId: "u2", content: "Thank you so much! Your support means everything 💜", timestamp: "10:32 AM", isRead: true },
+    { id: "m3", senderId: "u1", content: "Are you going to the creator meetup next week?", timestamp: "10:35 AM", isRead: false },
+  ],
+  "u1-u3": [
+    { id: "m4", senderId: "u3", content: "Your writing is so inspiring, Arjun!", timestamp: "Yesterday", isRead: true },
+    { id: "m5", senderId: "u1", content: "That means a lot coming from you Jessica, thank you! 🙏", timestamp: "Yesterday", isRead: true },
+  ],
+};
+
+const DEMO_NOTIFICATIONS = [
+  { id: "n1", type: "like", fromId: "u2", postPreview: "Sometimes the right words at the right time can change everything.", timestamp: "2m", isRead: false },
+  { id: "n2", type: "reply", fromId: "u1", postPreview: "That's so true! Keep inspiring ✨", timestamp: "15m", isRead: false },
+  { id: "n3", type: "mention", fromId: "u2", postPreview: "@arjun.verma love this perspective!", timestamp: "1h", isRead: true },
+  { id: "n4", type: "follow", fromId: "u4", postPreview: null, timestamp: "2h", isRead: true },
+  { id: "n5", type: "milestone", fromId: null, postPreview: "Your post got 100 likes! 🎉 Keep sharing amazing content.", timestamp: "3h", isRead: true },
+];
+
+const TRENDING = [
+  { tag: "#MondayMotivation", posts: "12.6K" },
+  { tag: "#ChasingDreams", posts: "8.3K" },
+  { tag: "#CoffeeLover", posts: "5.2K" },
+  { tag: "#TextOneCommunity", posts: "3.1K" },
+  { tag: "#SundayVibes", posts: "2.8K" },
+];
+
+// ============================================================
+// UTILS
+// ============================================================
+const formatNum = (n) => n >= 1000 ? `${(n / 1000).toFixed(1)}K` : n;
+const getUser = (id) => DEMO_USERS.find(u => u.id === id);
+
+// ============================================================
+// STYLES
+// ============================================================
+const getStyles = (dark) => ({
+  bg: dark ? "#0A0A0F" : "#F7F7FB",
+  surface: dark ? "#111118" : "#FFFFFF",
+  surfaceAlt: dark ? "#18181F" : "#F0F0F7",
+  border: dark ? "#232330" : "#E8E8F0",
+  borderLight: dark ? "#1E1E2A" : "#F0F0F7",
+  text: dark ? "#F0F0F8" : "#0D0D1A",
+  textSec: dark ? "#9090A8" : "#6B6B85",
+  textMuted: dark ? "#505068" : "#A0A0B8",
+  inputBg: dark ? "#1A1A24" : "#F4F4FB",
+  cardHover: dark ? "#161620" : "#FAFAFE",
+  shimmer: dark ? "#1C1C28" : "#EDEDF7",
+});
+
+// ============================================================
+// COMPONENTS
+// ============================================================
+
+const Avatar = ({ user, size = 40, onClick, showOnline }) => {
+  if (!user) return null;
+  return (
+    <div onClick={onClick} style={{
+      width: size, height: size, borderRadius: "50%",
+      background: `linear-gradient(135deg, ${user.avatarColor}CC, ${user.avatarColor})`,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      color: "#fff", fontSize: size * 0.35, fontWeight: 700,
+      cursor: onClick ? "pointer" : "default", flexShrink: 0,
+      border: `2px solid ${user.avatarColor}40`, position: "relative",
+      userSelect: "none",
+    }}>
+      {user.avatar}
+      {showOnline && (
+        <span style={{
+          position: "absolute", bottom: 1, right: 1,
+          width: size * 0.25, height: size * 0.25,
+          background: "#22C55E", borderRadius: "50%",
+          border: "2px solid #0A0A0F",
+        }} />
+      )}
+    </div>
+  );
+};
+
+const Icon = ({ name, size = 20, color = "currentColor" }) => {
+  const icons = {
+    home: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
+    homeFill: <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
+    search: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
+    bell: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>,
+    bellFill: <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>,
+    user: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+    userFill: <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+    plus: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
+    heart: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>,
+    heartFill: <svg width={size} height={size} viewBox="0 0 24 24" fill="#EF4444" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>,
+    comment: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>,
+    share: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>,
+    bookmark: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>,
+    bookmarkFill: <svg width={size} height={size} viewBox="0 0 24 24" fill={tokens.purple} stroke={tokens.purple} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>,
+    repost: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>,
+    send: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>,
+    settings: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>,
+    message: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>,
+    check: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
+    x: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
+    moon: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>,
+    sun: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>,
+    back: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>,
+    more: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>,
+    image: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>,
+    video: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>,
+    pin: <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3" fill="white"/></svg>,
+    crown: <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke={color} strokeWidth="1.5"><path d="M2 17l3-9 4.5 6L12 5l2.5 9 4.5-6 3 9H2z"/></svg>,
+    trending: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>,
+    verified: <svg width={size} height={size} viewBox="0 0 24 24" fill={tokens.blue} stroke="none"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/><path d="M9 12l2 2 4-4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/></svg>,
+    group: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>,
+    shield: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
+    logout: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>,
+    edit: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>,
+    bar: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>,
+    flag: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>,
+    ban: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>,
+    trash: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>,
+    location: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>,
+    link: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>,
+    calendar: <svg width={size} height={size} viewBox="
